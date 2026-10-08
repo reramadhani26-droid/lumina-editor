@@ -1,0 +1,417 @@
+```html
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web Editor Foto - Ala Lightroom</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #121212;
+            color: #ffffff;
+        }
+        canvas {
+            max-width: 100%;
+            max-height: 50vh;
+            object-fit: contain;
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+        }
+        input[type=range] {
+            accent-color: #3b82f6;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans">
+
+    <header class="bg-gray-900 border-b border-gray-800 p-4 shadow-md sticky top-0 z-40">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
+                ✨ Lumina Editor
+            </h1>
+            <div class="flex items-center gap-2">
+                <!-- User Info & Google Login -->
+                <div id="user-info" class="hidden flex items-center gap-2 text-sm text-gray-300">
+                    <img id="user-avatar" src="" alt="Avatar" class="w-8 h-8 rounded-full border border-gray-600">
+                    <span id="user-name" class="hidden sm:inline font-medium">User</span>
+                    <button id="logout-btn" class="text-red-400 hover:text-red-300 ml-1 text-xs bg-gray-800 px-2 py-1 rounded">Keluar</button>
+                </div>
+                <button id="login-btn" class="bg-white text-gray-900 hover:bg-gray-200 px-3 py-1.5 rounded-lg transition text-xs sm:text-sm font-bold flex items-center gap-2">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                    Google Login
+                </button>
+                <label for="upload" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg cursor-pointer transition text-xs sm:text-sm font-semibold">
+                    📁 Buka Foto
+                </label>
+                <input type="file" id="upload" accept="image/*" class="hidden">
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow container mx-auto p-4 flex flex-col gap-6 max-w-4xl">
+        
+        <!-- Canvas Area -->
+        <div class="bg-gray-900 border border-gray-800 rounded-2xl p-4 flex flex-col items-center justify-center min-h-[300px] shadow-inner">
+            <div id="placeholder" class="text-center text-gray-400 py-12">
+                <p class="text-4xl mb-2">📸</p>
+                <p class="text-sm">Belum ada foto yang dibuka.<br>Klik tombol <b>"Buka Foto"</b> di atas untuk mulai mengedit.</p>
+            </div>
+            <canvas id="canvas" class="hidden"></canvas>
+        </div>
+
+        <!-- Filter Sliders Panel -->
+        <div class="bg-gray-900 border border-gray-800 rounded-2xl p-5 flex flex-col gap-4">
+            <h2 class="text-base font-semibold border-b border-gray-800 pb-2 text-blue-400">🎛️ Penyesuaian Warna (Lightroom Style)</h2>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <!-- Brightness -->
+                <div class="flex flex-col gap-1">
+                    <div class="flex justify-between text-xs text-gray-300">
+                        <label for="brightness">Kecerahan</label>
+                        <span id="brightness-val">100%</span>
+                    </div>
+                    <input type="range" id="brightness" min="0" max="200" value="100" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                </div>
+
+                <!-- Contrast -->
+                <div class="flex flex-col gap-1">
+                    <div class="flex justify-between text-xs text-gray-300">
+                        <label for="contrast">Kontras</label>
+                        <span id="contrast-val">100%</span>
+                    </div>
+                    <input type="range" id="contrast" min="0" max="200" value="100" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                </div>
+
+                <!-- Saturation -->
+                <div class="flex flex-col gap-1">
+                    <div class="flex justify-between text-xs text-gray-300">
+                        <label for="saturation">Saturasi</label>
+                        <span id="saturation-val">100%</span>
+                    </div>
+                    <input type="range" id="saturation" min="0" max="200" value="100" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                </div>
+
+                <!-- Sepia -->
+                <div class="flex flex-col gap-1">
+                    <div class="flex justify-between text-xs text-gray-300">
+                        <label for="sepia">Sepia (Vintage)</label>
+                        <span id="sepia-val">0%</span>
+                    </div>
+                    <input type="range" id="sepia" min="0" max="100" value="0" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                </div>
+
+                <!-- Hue Rotate -->
+                <div class="flex flex-col gap-1">
+                    <div class="flex justify-between text-xs text-gray-300">
+                        <label for="hue">Rona Warna (Hue)</label>
+                        <span id="hue-val">0°</span>
+                    </div>
+                    <input type="range" id="hue" min="-180" max="180" value="0" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                </div>
+
+                <!-- Blur -->
+                <div class="flex flex-col gap-1">
+                    <div class="flex justify-between text-xs text-gray-300">
+                        <label for="blur">Efek Kabur (Blur)</label>
+                        <span id="blur-val">0px</span>
+                    </div>
+                    <input type="range" id="blur" min="0" max="20" value="0" step="0.5" class="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer">
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-2 mt-3">
+                <button id="reset" class="flex-1 bg-gray-800 hover:bg-gray-700 text-white py-2 rounded-xl transition text-xs font-semibold">
+                    🔄 Reset
+                </button>
+                <button id="download" class="flex-1 bg-green-600 hover:bg-green-700 text-white py-2 rounded-xl transition text-xs font-semibold">
+                    💾 Ekspor ke HP
+                </button>
+                <button id="save-cloud" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-xl transition text-xs font-semibold flex items-center justify-center gap-1">
+                    ☁️ Simpan Cloud
+                </button>
+            </div>
+        </div>
+        
+        <!-- Private Cloud Gallery Section -->
+        <div id="cloud-gallery-section" class="w-full bg-gray-900 rounded-2xl p-5 border border-gray-800 hidden">
+            <h2 class="text-base font-semibold border-b border-gray-800 pb-2 mb-4 text-purple-400">☁️ Galeri Cloud Pribadi Saya</h2>
+            <div id="gallery-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                <p class="text-gray-400 text-xs col-span-full">Memuat gambar tersimpan...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Custom Modal Popup -->
+    <div id="custom-modal" class="fixed inset-0 bg-black/70 hidden flex items-center justify-center z-50 p-4">
+        <div class="bg-gray-900 border border-gray-700 p-6 rounded-2xl shadow-2xl max-w-sm w-full text-center">
+            <h3 id="modal-title" class="text-base font-bold text-white mb-2">Pemberitahuan</h3>
+            <p id="modal-message" class="text-gray-300 mb-5 text-xs"></p>
+            <button id="modal-close" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-xl transition text-xs font-semibold w-full">Tutup</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'lumina-editor-local';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
+        
+        let app, auth, db;
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+        } catch (e) {
+            console.error("Firebase tidak tersedia di lingkungan ini:", e);
+        }
+
+        let currentUser = null;
+        let unsubscribeGallery = null;
+
+        async function initAuth() {
+            if (!auth) return;
+            try {
+                if (typeof __initial_auth_token !== 'undefined') {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Auth error:", error);
+            }
+        }
+        if (auth) initAuth();
+
+        const loginBtn = document.getElementById('login-btn');
+        const logoutBtn = document.getElementById('logout-btn');
+        const userInfo = document.getElementById('user-info');
+        const userName = document.getElementById('user-name');
+        const userAvatar = document.getElementById('user-avatar');
+        const cloudGallerySection = document.getElementById('cloud-gallery-section');
+
+        if (auth) {
+            onAuthStateChanged(auth, (user) => {
+                if (user && !user.isAnonymous) {
+                    currentUser = user;
+                    loginBtn.classList.add('hidden');
+                    userInfo.classList.remove('hidden');
+                    userInfo.classList.add('flex');
+                    userName.innerText = user.displayName || user.email || 'Pengguna Cloud';
+                    userAvatar.src = user.photoURL || 'https://placehold.co/100x100/3b82f6/ffffff?text=U';
+                    cloudGallerySection.classList.remove('hidden');
+                    loadCloudGallery();
+                } else {
+                    currentUser = user;
+                    loginBtn.classList.remove('hidden');
+                    userInfo.classList.add('hidden');
+                    userInfo.classList.remove('flex');
+                    cloudGallerySection.classList.add('hidden');
+                    if (unsubscribeGallery) {
+                        unsubscribeGallery();
+                        unsubscribeGallery = null;
+                    }
+                }
+            });
+        }
+
+        loginBtn.addEventListener('click', async () => {
+            if (!auth) {
+                showModal("Sistem Cloud sedang tidak aktif.", "Error");
+                return;
+            }
+            const provider = new GoogleAuthProvider();
+            try {
+                await signInWithPopup(auth, provider);
+                showModal("Berhasil login dengan akun Google!", "Sukses");
+            } catch (error) {
+                showModal("Gagal login: " + error.message, "Gagal");
+            }
+        });
+
+        logoutBtn.addEventListener('click', async () => {
+            if (auth) {
+                await signOut(auth);
+                showModal("Anda telah keluar dari akun.", "Info");
+            }
+        });
+
+        // Photo Editor Logic
+        const upload = document.getElementById('upload');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const placeholder = document.getElementById('placeholder');
+        
+        const sliders = {
+            brightness: document.getElementById('brightness'),
+            contrast: document.getElementById('contrast'),
+            saturation: document.getElementById('saturation'),
+            sepia: document.getElementById('sepia'),
+            hue: document.getElementById('hue'),
+            blur: document.getElementById('blur')
+        };
+        const values = {
+            brightness: document.getElementById('brightness-val'),
+            contrast: document.getElementById('contrast-val'),
+            saturation: document.getElementById('saturation-val'),
+            sepia: document.getElementById('sepia-val'),
+            hue: document.getElementById('hue-val'),
+            blur: document.getElementById('blur-val')
+        };
+
+        const resetBtn = document.getElementById('reset');
+        const downloadBtn = document.getElementById('download');
+        const saveCloudBtn = document.getElementById('save-cloud');
+
+        let img = new Image();
+
+        upload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => {
+                img.src = reader.result;
+            }
+        });
+
+        img.onload = () => {
+            placeholder.classList.add('hidden');
+            canvas.classList.remove('hidden');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            applyFilters();
+        };
+
+        function getFilterString() {
+            return `brightness(${sliders.brightness.value}%) contrast(${sliders.contrast.value}%) saturate(${sliders.saturation.value}%) sepia(${sliders.sepia.value}%) hue-rotate(${sliders.hue.value}deg) blur(${sliders.blur.value}px)`;
+        }
+
+        function applyFilters() {
+            if (!img.src) return;
+            
+            values.brightness.innerText = `${sliders.brightness.value}%`;
+            values.contrast.innerText = `${sliders.contrast.value}%`;
+            values.saturation.innerText = `${sliders.saturation.value}%`;
+            values.sepia.innerText = `${sliders.sepia.value}%`;
+            values.hue.innerText = `${sliders.hue.value}°`;
+            values.blur.innerText = `${sliders.blur.value}px`;
+
+            ctx.filter = getFilterString();
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        }
+
+        Object.values(sliders).forEach(slider => {
+            slider.addEventListener('input', applyFilters);
+        });
+
+        resetBtn.addEventListener('click', () => {
+            sliders.brightness.value = 100;
+            sliders.contrast.value = 100;
+            sliders.saturation.value = 100;
+            sliders.sepia.value = 0;
+            sliders.hue.value = 0;
+            sliders.blur.value = 0;
+            applyFilters();
+        });
+
+        downloadBtn.addEventListener('click', () => {
+            if (!img.src) {
+                showModal("Silakan buka foto terlebih dahulu!", "Peringatan");
+                return;
+            }
+            const dataURL = canvas.toDataURL('image/jpeg', 0.9);
+            const link = document.createElement('a');
+            link.download = 'Lumina-Edit-' + Date.now() + '.jpg';
+            link.href = dataURL;
+            link.click();
+        });
+
+        function getCompressedImage(sourceImg, filterString) {
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            let w = sourceImg.width;
+            let h = sourceImg.height;
+            const maxDim = 800;
+            
+            if (w > maxDim || h > maxDim) {
+                if (w > h) { h = Math.floor((h / w) * maxDim); w = maxDim; }
+                else { w = Math.floor((w / h) * maxDim); h = maxDim; }
+            }
+            
+            tempCanvas.width = w;
+            tempCanvas.height = h;
+            tempCtx.filter = filterString;
+            tempCtx.drawImage(sourceImg, 0, 0, w, h);
+            return tempCanvas.toDataURL('image/jpeg', 0.6);
+        }
+
+        saveCloudBtn.addEventListener('click', async () => {
+            if (!img.src) {
+                showModal("Silakan buka foto terlebih dahulu.", "Peringatan");
+                return;
+            }
+            if (!currentUser || currentUser.isAnonymous) {
+                showModal("Silakan Login dengan akun Google (Gmail) terlebih dahulu untuk menyimpan ke Cloud Anda.", "Peringatan");
+                return;
+            }
+
+            saveCloudBtn.innerHTML = '⏳ Menyimpan...';
+            saveCloudBtn.disabled = true;
+
+            try {
+                const compressedDataURL = getCompressedImage(img, getFilterString());
+                const path = `artifacts/${appId}/users/${currentUser.uid}/saved_edits`;
+                
+                await addDoc(collection(db, path), {
+                    image: compressedDataURL,
+                    timestamp: Date.now()
+                });
+
+                showModal("Foto berhasil diamankan ke Cloud Pribadi Anda!", "Sukses!");
+            } catch (error) {
+                showModal("Gagal menyimpan: " + error.message, "Error");
+            } finally {
+                saveCloudBtn.innerHTML = '☁️ Simpan Cloud';
+                saveCloudBtn.disabled = false;
+            }
+        });
+
+        function loadCloudGallery() {
+            if (!currentUser || !db) return;
+            
+            const path = `artifacts/${appId}/users/${currentUser.uid}/saved_edits`;
+            const q = query(collection(db, path));
+
+            unsubscribeGallery = onSnapshot(q, (snapshot) => {
+                const grid = document.getElementById('gallery-grid');
+                grid.innerHTML = '';
+                
+                if (snapshot.empty) {
+                    grid.innerHTML = '<p class="text-gray-400 text-xs col-span-full">Belum ada foto tersimpan di Cloud Anda.</p>';
+                    return;
+                }
+
+                let docs = [];
+                snapshot.forEach(doc => docs.push({ id: doc.id, ...doc.data() }));
+                docs.sort((a, b) => b.timestamp - a.timestamp);
+
+                docs.forEach(data => {
+                    const div = document.createElement('div');
+                    div.className = "relative group rounded-xl overflow-hidden border border-gray-800 aspect-square bg-gray-950 flex items-center justify-center shadow";
+                    
+                    const thumbnail = document.createElement('img');
+                    thumbnail.src = data.image;
+                    thumbnail.className = "object-cover w-full h-full";
+                    
+                    const overlay = document.createElement('div');
+                    overlay.className = "absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-3";
+                    
+                    const btnDownload = document.createElement('button');
+                    btnDownload.innerHTML = "⬇️";
+                    btnDownload.className = "bg-white p-2 rounded-full text-xs hover:bg-gray-200 transition text-black font-bold";
+  
